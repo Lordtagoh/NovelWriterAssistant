@@ -29,10 +29,11 @@ namespace NovelWriterAssistant
             public long Id { get; set; }
             public string Subtitle { get; set; } = null!;
 
+            public DateTime UpdatedDateTime { get; set; }
+
             public override string ToString()
-            {
-                return Subtitle;
-            }
+                => $"{UpdatedDateTime.ToString("yy/MM/dd hh:mm")}: {Subtitle}";
+
         }
 
         public class MainTitleItem
@@ -40,10 +41,10 @@ namespace NovelWriterAssistant
             public long Id { get; set; }
             public string MainTitle { get; set; } = null!;
 
+            public DateTime UpdatedDateTime { get; set; }
+
             public override string ToString()
-            {
-                return MainTitle;
-            }
+                => $"{UpdatedDateTime.ToString("yy/MM/dd hh:mm")}: {MainTitle}";
         }
 
         public long? SelectedStoryVersionId { get; private set; }
@@ -69,7 +70,7 @@ namespace NovelWriterAssistant
 
                     var command = connection.CreateCommand();
                     command.CommandText = @"
-                        SELECT Id, MainTitle
+                        SELECT Id, MainTitle, UpdatedDateTime
                         FROM MainTitles
                         ORDER BY UpdatedDateTime DESC
                     ";
@@ -81,7 +82,8 @@ namespace NovelWriterAssistant
                             var item = new MainTitleItem
                             {
                                 Id = reader.GetInt64(0),
-                                MainTitle = reader.GetString(1)
+                                MainTitle = reader.GetString(1),
+                                UpdatedDateTime = reader.GetDateTime(2)
                             };
                             mainTitleListBox.Items.Add(item);
                         }
@@ -97,6 +99,9 @@ namespace NovelWriterAssistant
                     MessageBoxIcon.Error
                 );
             }
+            //If i just have a items just click it
+            if (mainTitleListBox.Items.Count == 1)
+                mainTitleListBox.SelectedIndex = 0;
         }
 
         private void LoadSubTitles(long mainTitleId)
@@ -112,7 +117,7 @@ namespace NovelWriterAssistant
 
                     var command = connection.CreateCommand();
                     command.CommandText = @"
-                        SELECT Id, Subtitle
+                        SELECT Id, Subtitle, UpdatedDateTime
                         FROM SubTitles
                         WHERE MainTitleId = $mainTitleId
                         ORDER BY UpdatedDateTime DESC
@@ -126,7 +131,8 @@ namespace NovelWriterAssistant
                             var item = new SubTitleItem
                             {
                                 Id = reader.GetInt64(0),
-                                Subtitle = reader.GetString(1)
+                                Subtitle = reader.GetString(1),
+                                UpdatedDateTime = reader.GetDateTime(2)
                             };
                             subTitleListBox.Items.Add(item);
                         }
@@ -142,6 +148,9 @@ namespace NovelWriterAssistant
                     MessageBoxIcon.Error
                 );
             }
+            //If i just have a items just click it
+            if (subTitleListBox.Items.Count == 1)
+                subTitleListBox.SelectedIndex = 0;
         }
 
         private void LoadVersions(long subTitleId)
@@ -159,7 +168,7 @@ namespace NovelWriterAssistant
                         SELECT Id, Version, SavedDateTime, Novel, IsAutoSave
                         FROM StoryVersions
                         WHERE SubTitleId = $subTitleId
-                        ORDER BY Version DESC, IsAutoSave ASC
+                        ORDER BY Version ASC, IsAutoSave ASC
                     ";
                     command.Parameters.AddWithValue("$subTitleId", subTitleId);
 
@@ -255,6 +264,14 @@ namespace NovelWriterAssistant
         {
             DialogResult = DialogResult.Cancel;
             Close();
+        }
+
+        /// <summary>If i double click on a novel item i want to load it</summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnVersionDoubleClick(object sender, EventArgs e)
+        {
+            loadButton.PerformClick();
         }
     }
 }

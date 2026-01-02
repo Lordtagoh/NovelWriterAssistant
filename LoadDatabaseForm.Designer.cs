@@ -58,9 +58,10 @@ namespace NovelWriterAssistant
             versionListBox.HorizontalScrollbar = true;
             versionListBox.Location = new System.Drawing.Point(524, 27);
             versionListBox.Name = "versionListBox";
-            versionListBox.Size = new System.Drawing.Size(450, 439);
+            versionListBox.Size = new System.Drawing.Size(629, 439);
             versionListBox.TabIndex = 5;
             versionListBox.SelectedIndexChanged += VersionListBox_SelectedIndexChanged;
+            versionListBox.DoubleClick += OnVersionDoubleClick;
             // 
             // mainTitleLabel
             // 
@@ -96,7 +97,7 @@ namespace NovelWriterAssistant
             // 
             loadButton.Enabled = false;
             loadButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            loadButton.Location = new System.Drawing.Point(818, 472);
+            loadButton.Location = new System.Drawing.Point(997, 472);
             loadButton.Name = "loadButton";
             loadButton.Size = new System.Drawing.Size(75, 30);
             loadButton.TabIndex = 6;
@@ -106,7 +107,7 @@ namespace NovelWriterAssistant
             // 
             // cancelButton
             // 
-            cancelButton.Location = new System.Drawing.Point(899, 472);
+            cancelButton.Location = new System.Drawing.Point(1078, 472);
             cancelButton.Name = "cancelButton";
             cancelButton.Size = new System.Drawing.Size(75, 30);
             cancelButton.TabIndex = 7;
@@ -118,7 +119,7 @@ namespace NovelWriterAssistant
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(986, 514);
+            ClientSize = new System.Drawing.Size(1165, 514);
             Controls.Add(cancelButton);
             Controls.Add(loadButton);
             Controls.Add(versionListBox);
