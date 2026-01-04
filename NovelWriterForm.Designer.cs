@@ -223,7 +223,7 @@ namespace NovelWriterAssistant
             option1TextBox.Name = "option1TextBox";
             option1TextBox.ReadOnly = true;
             option1TextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            option1TextBox.Size = new System.Drawing.Size(310, 220);
+            option1TextBox.Size = new System.Drawing.Size(310, 233);
             option1TextBox.TabIndex = 3;
             // 
             // option2TextBox
@@ -236,7 +236,7 @@ namespace NovelWriterAssistant
             option2TextBox.Name = "option2TextBox";
             option2TextBox.ReadOnly = true;
             option2TextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            option2TextBox.Size = new System.Drawing.Size(310, 220);
+            option2TextBox.Size = new System.Drawing.Size(310, 233);
             option2TextBox.TabIndex = 4;
             // 
             // option3TextBox
@@ -249,7 +249,7 @@ namespace NovelWriterAssistant
             option3TextBox.Name = "option3TextBox";
             option3TextBox.ReadOnly = true;
             option3TextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            option3TextBox.Size = new System.Drawing.Size(310, 220);
+            option3TextBox.Size = new System.Drawing.Size(310, 233);
             option3TextBox.TabIndex = 5;
             // 
             // promptLabel
@@ -279,7 +279,7 @@ namespace NovelWriterAssistant
             useOption1Button.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             useOption1Button.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             useOption1Button.ForeColor = System.Drawing.Color.White;
-            useOption1Button.Location = new System.Drawing.Point(10, 835);
+            useOption1Button.Location = new System.Drawing.Point(10, 848);
             useOption1Button.Name = "useOption1Button";
             useOption1Button.Size = new System.Drawing.Size(310, 30);
             useOption1Button.TabIndex = 8;
@@ -294,7 +294,7 @@ namespace NovelWriterAssistant
             useOption2Button.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             useOption2Button.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             useOption2Button.ForeColor = System.Drawing.Color.White;
-            useOption2Button.Location = new System.Drawing.Point(330, 835);
+            useOption2Button.Location = new System.Drawing.Point(330, 848);
             useOption2Button.Name = "useOption2Button";
             useOption2Button.Size = new System.Drawing.Size(310, 30);
             useOption2Button.TabIndex = 9;
@@ -309,7 +309,7 @@ namespace NovelWriterAssistant
             useOption3Button.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             useOption3Button.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             useOption3Button.ForeColor = System.Drawing.Color.White;
-            useOption3Button.Location = new System.Drawing.Point(650, 835);
+            useOption3Button.Location = new System.Drawing.Point(650, 848);
             useOption3Button.Name = "useOption3Button";
             useOption3Button.Size = new System.Drawing.Size(310, 30);
             useOption3Button.TabIndex = 10;
@@ -342,7 +342,7 @@ namespace NovelWriterAssistant
             generationTimeLabel.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             generationTimeLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
             generationTimeLabel.ForeColor = System.Drawing.Color.Gray;
-            generationTimeLabel.Location = new System.Drawing.Point(10, 865);
+            generationTimeLabel.Location = new System.Drawing.Point(10, 878);
             generationTimeLabel.Name = "generationTimeLabel";
             generationTimeLabel.Size = new System.Drawing.Size(932, 20);
             generationTimeLabel.TabIndex = 17;
@@ -388,37 +388,37 @@ namespace NovelWriterAssistant
             loadDBButton.Text = "Load DB";
             loadDBButton.UseVisualStyleBackColor = false;
             loadDBButton.Click += LoadDBButton_Click;
-            //
+            // 
             // sessionStatusLabel
-            //
+            // 
             sessionStatusLabel.AutoSize = true;
             sessionStatusLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
             sessionStatusLabel.ForeColor = System.Drawing.Color.DarkGreen;
-            sessionStatusLabel.Location = new System.Drawing.Point(10, 850);
+            sessionStatusLabel.Location = new System.Drawing.Point(239, 445);
             sessionStatusLabel.Name = "sessionStatusLabel";
-            sessionStatusLabel.Size = new System.Drawing.Size(120, 15);
+            sessionStatusLabel.Size = new System.Drawing.Size(111, 15);
             sessionStatusLabel.TabIndex = 27;
             sessionStatusLabel.Text = "Session: Not started";
-            //
+            // 
             // resetSessionButton
-            //
+            // 
             resetSessionButton.BackColor = System.Drawing.Color.FromArgb(255, 128, 0);
             resetSessionButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             resetSessionButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             resetSessionButton.ForeColor = System.Drawing.Color.White;
-            resetSessionButton.Location = new System.Drawing.Point(150, 845);
+            resetSessionButton.Location = new System.Drawing.Point(860, 441);
             resetSessionButton.Name = "resetSessionButton";
             resetSessionButton.Size = new System.Drawing.Size(110, 25);
             resetSessionButton.TabIndex = 28;
             resetSessionButton.Text = "Reset Session";
             resetSessionButton.UseVisualStyleBackColor = false;
             resetSessionButton.Click += ResetSessionButton_Click;
-            //
+            // 
             // NovelWriterForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(984, 880);
+            ClientSize = new System.Drawing.Size(984, 893);
             Controls.Add(resetSessionButton);
             Controls.Add(sessionStatusLabel);
             Controls.Add(loadDBButton);

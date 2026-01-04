@@ -1390,26 +1390,15 @@ namespace NovelWriterAssistant
             // Check if this content is already in the last 3 paragraphs
             if (!string.IsNullOrWhiteSpace(novelTextBox.Text))
             {
-                // Split into paragraphs (separated by double newlines)
-                string[] paragraphs = novelTextBox.Text.Split(new[] { "\r\n\r\n", "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
-
-                // Get the last 3 paragraphs
-                int startIndex = Math.Max(0, paragraphs.Length - 3);
-                var lastParagraphs = paragraphs.Skip(startIndex).ToArray();
-
-                // Check if the option text is already present in any of the last 3 paragraphs
-                foreach (var paragraph in lastParagraphs)
+                if (novelTextBox.Text.Contains(optionText.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
-                    if (paragraph.Trim().Equals(optionText.Trim(), StringComparison.OrdinalIgnoreCase))
-                    {
-                        MessageBox.Show(
-                            "This content is already present in the last few paragraphs of your novel. It was not added again.",
-                            "Duplicate Content",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information
-                        );
-                        return;
-                    }
+                    MessageBox.Show(
+                        "This content is already present in the last few paragraphs of your novel. It was not added again.",
+                        "Duplicate Content",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+                    return;
                 }
             }
 
@@ -1425,6 +1414,7 @@ namespace NovelWriterAssistant
             // Scroll to the end
             novelTextBox.SelectionStart = novelTextBox.Text.Length;
             novelTextBox.ScrollToCaret();
+            NovelTextBox_TextChanged(this, EventArgs.Empty);
         }
 
         private void ResetSessionButton_Click(object sender, EventArgs e)
