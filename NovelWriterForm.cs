@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -15,12 +16,18 @@ namespace NovelWriterAssistant
     {
         private HttpClient httpClient;
         private const string OLLAMA_URL = "http://localhost:11434/api/generate";
+        private const string OLLAMA_CHAT_URL = "http://localhost:11434/api/chat";
         private const string OLLAMA_TAGS_URL = "http://localhost:11434/api/tags";
         private const string autoSaveTitle = "autosave";
         private readonly string dbFilePath;
         private readonly string connectionString;
         private string autoSaveLoadedModel = "";
         private bool novelWasChangedFromLastSave;
+
+        // Session management fields
+        private OllamaSessionManager sessionManager;
+        private string lastNovelText = "";
+        private string currentModelName = "";
 
         // Class to hold generation response with token counts
         private class GenerationResponse
@@ -36,6 +43,9 @@ namespace NovelWriterAssistant
             InitializeComponent();
             httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromMinutes(5); // Longer timeout for LLM generation
+
+            // Initialize session manager
+            sessionManager = new OllamaSessionManager();
 
             // Set up database file path
             string tempFolder = System.IO.Path.GetTempPath();
@@ -367,19 +377,44 @@ namespace NovelWriterAssistant
 
             try
             {
-                // Create the prompt combining novel context and user instructions
-                string fullPrompt = BuildPrompt(numberOfParagraph);
+                // Check if session needs reset
+                string selectedModel = modelComboBox.SelectedItem?.ToString() ?? "llama3.2:latest";
+                bool modelChanged = !string.IsNullOrEmpty(currentModelName) && currentModelName != selectedModel;
+                bool novelEdited = sessionManager.IsNovelEdited(novelTextBox.Text);
 
-                // Generate three different variations
-                var task1 = GenerateParagraph(fullPrompt);
-                var task2 = GenerateParagraph(fullPrompt);
-                var task3 = GenerateParagraph(fullPrompt);
+                // Reset session if needed
+                if (modelChanged || novelEdited || sessionManager.IsEmpty())
+                {
+                    sessionManager.ResetSession();
+                    string context = ProcessNovelContextForSummary(novelTextBox.Text);
+                    sessionManager.InitializeSession(context, systemPromptTextBox.Text);
+                    lastNovelText = novelTextBox.Text;
+                    currentModelName = selectedModel;
+                }
+
+                // Get chat messages from session manager
+                var messages = sessionManager.GetChatMessages(
+                    novelTextBox.Text,
+                    promptTextBox.Text,
+                    numberOfParagraph
+                );
+
+                // Store the user message for later (before it's sent)
+                var lastUserMessage = messages[messages.Count - 1].content;
+
+                // Generate three different variations with temperature variation
+                var task1 = GenerateParagraphChat(messages, 0.7);
+                var task2 = GenerateParagraphChat(messages, 0.85);
+                var task3 = GenerateParagraphChat(messages, 1.0);
                 generationTimeLabel.Text = $"{DateTime.Now.ToLongTimeString()} Generating...";
                 await Task.WhenAll(task1, task2, task3);
 
                 var result1 = await task1;
                 var result2 = await task2;
                 var result3 = await task3;
+
+                // Update session with the user message that was sent
+                sessionManager.UpdateAfterUserMessage(lastUserMessage);
 
                 option1TextBox.Text = result1.Text;
                 option2TextBox.Text = result2.Text;
@@ -390,10 +425,27 @@ namespace NovelWriterAssistant
                 int totalResponseTokens = result1.ResponseTokens + result2.ResponseTokens + result3.ResponseTokens;
                 int totalTokens = totalPromptTokens + totalResponseTokens;
 
+                // Get estimated tokens saved
+                int tokensSaved = sessionManager.GetEstimatedTokensSaved();
+
                 // Stop timing and display the result with token usage
                 stopwatch.Stop();
                 double totalSeconds = stopwatch.Elapsed.TotalSeconds;
-                generationTimeLabel.Text = $"Generation completed in {totalSeconds:F2} seconds ({stopwatch.Elapsed.TotalMilliseconds:F0} ms) | Tokens: {totalTokens:N0} (Prompt: {totalPromptTokens:N0}/3, Response: {totalResponseTokens:N0}/3)";
+                string statsMessage = $"Generation completed in {totalSeconds:F2} seconds ({stopwatch.Elapsed.TotalMilliseconds:F0} ms) | " +
+                                     $"Tokens: {totalTokens:N0} (Prompt: {totalPromptTokens:N0}/3, Response: {totalResponseTokens:N0}/3)";
+
+                if (tokensSaved > 0)
+                {
+                    statsMessage += $" | Saved ~{tokensSaved:N0} tokens/request";
+                }
+
+                statsMessage += $" | Session: {sessionManager.MessageCount} messages";
+
+                generationTimeLabel.Text = statsMessage;
+
+                // Update session status label
+                sessionStatusLabel.Text = $"Session: Active ({sessionManager.MessageCount} messages)";
+                sessionStatusLabel.ForeColor = System.Drawing.Color.DarkGreen;
             }
             catch (Exception ex)
             {
@@ -560,6 +612,72 @@ namespace NovelWriterAssistant
                 if (root.TryGetProperty("response", out JsonElement responseElement))
                 {
                     result.Text = responseElement.GetString()?.Trim() ?? "No response generated";
+                }
+                else
+                {
+                    result.Text = "Error parsing response";
+                }
+
+                // Extract token counts
+                if (root.TryGetProperty("prompt_eval_count", out JsonElement promptTokensElement))
+                {
+                    result.PromptTokens = promptTokensElement.GetInt32();
+                }
+
+                if (root.TryGetProperty("eval_count", out JsonElement responseTokensElement))
+                {
+                    result.ResponseTokens = responseTokensElement.GetInt32();
+                }
+            }
+
+            return result;
+        }
+
+        private async Task<GenerationResponse> GenerateParagraphChat(
+            System.Collections.Generic.List<OllamaSessionManager.ChatMessage> messages,
+            double temperature)
+        {
+            string selectedModel = modelComboBox.SelectedItem?.ToString() ?? "llama3.2:latest";
+
+            var requestBody = new OllamaSessionManager.ChatRequest
+            {
+                model = selectedModel,
+                messages = messages,
+                stream = false,
+                options = new
+                {
+                    temperature = temperature,
+                    top_p = 0.9,
+                    num_predict = 200
+                },
+                keep_alive = "10m" // Keep model loaded in memory for 10 minutes
+            };
+
+            string jsonRequest = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = await httpClient.PostAsync(OLLAMA_CHAT_URL, content);
+            response.EnsureSuccessStatusCode();
+
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+
+            var result = new GenerationResponse();
+
+            using (JsonDocument doc = JsonDocument.Parse(jsonResponse))
+            {
+                JsonElement root = doc.RootElement;
+
+                // Extract response text from message.content
+                if (root.TryGetProperty("message", out JsonElement messageElement))
+                {
+                    if (messageElement.TryGetProperty("content", out JsonElement contentElement))
+                    {
+                        result.Text = contentElement.GetString()?.Trim() ?? "No response generated";
+                    }
+                    else
+                    {
+                        result.Text = "Error: No content in message";
+                    }
                 }
                 else
                 {
@@ -1055,6 +1173,11 @@ namespace NovelWriterAssistant
 
                                 // Resubscribe to event
                                 novelTextBox.TextChanged += NovelTextBox_TextChanged;
+
+                                // Reset session when loading a novel
+                                sessionManager.ResetSession();
+                                lastNovelText = "";
+                                currentModelName = autoSaveLoadedModel;
                             }
                         }
                     }
@@ -1246,6 +1369,14 @@ namespace NovelWriterAssistant
             if (string.IsNullOrEmpty(text))
                 return;
             AppendOptionToNovel(text);
+
+            // Update session with the selected assistant response
+            sessionManager.AddAssistantResponse(text);
+
+            // Update novel context tracking
+            sessionManager.UpdateNovelContext(novelTextBox.Text);
+            lastNovelText = novelTextBox.Text;
+
             AutoSaveToDatabase();
         }
 
@@ -1254,6 +1385,32 @@ namespace NovelWriterAssistant
             if (string.IsNullOrWhiteSpace(optionText))
             {
                 return;
+            }
+
+            // Check if this content is already in the last 3 paragraphs
+            if (!string.IsNullOrWhiteSpace(novelTextBox.Text))
+            {
+                // Split into paragraphs (separated by double newlines)
+                string[] paragraphs = novelTextBox.Text.Split(new[] { "\r\n\r\n", "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                // Get the last 3 paragraphs
+                int startIndex = Math.Max(0, paragraphs.Length - 3);
+                var lastParagraphs = paragraphs.Skip(startIndex).ToArray();
+
+                // Check if the option text is already present in any of the last 3 paragraphs
+                foreach (var paragraph in lastParagraphs)
+                {
+                    if (paragraph.Trim().Equals(optionText.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        MessageBox.Show(
+                            "This content is already present in the last few paragraphs of your novel. It was not added again.",
+                            "Duplicate Content",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information
+                        );
+                        return;
+                    }
+                }
             }
 
             // Add a newline if there's already content
@@ -1268,6 +1425,24 @@ namespace NovelWriterAssistant
             // Scroll to the end
             novelTextBox.SelectionStart = novelTextBox.Text.Length;
             novelTextBox.ScrollToCaret();
+        }
+
+        private void ResetSessionButton_Click(object sender, EventArgs e)
+        {
+            // Reset the session manager
+            sessionManager.ResetSession();
+            lastNovelText = "";
+
+            // Update session status label
+            sessionStatusLabel.Text = "Session: Reset - will reinitialize on next generation";
+            sessionStatusLabel.ForeColor = System.Drawing.Color.DarkOrange;
+
+            MessageBox.Show(
+                "Session reset successfully. The next generation will send the full novel context to start a fresh session.",
+                "Session Reset",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
         }
 
         private void ClearAllButton_Click(object sender, EventArgs e)
@@ -1295,6 +1470,12 @@ namespace NovelWriterAssistant
 
                 // Resubscribe to event
                 novelTextBox.TextChanged += NovelTextBox_TextChanged;
+
+                // Reset session when clearing all
+                sessionManager.ResetSession();
+                lastNovelText = "";
+                sessionStatusLabel.Text = "Session: Not started";
+                sessionStatusLabel.ForeColor = System.Drawing.Color.Gray;
 
                 // Save the cleared state
                 AutoSaveToDatabase();

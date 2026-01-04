@@ -59,6 +59,8 @@ namespace NovelWriterAssistant
             generateTwoParagraphButton = new System.Windows.Forms.Button();
             generateThreeParagraphButton = new System.Windows.Forms.Button();
             loadDBButton = new System.Windows.Forms.Button();
+            sessionStatusLabel = new System.Windows.Forms.Label();
+            resetSessionButton = new System.Windows.Forms.Button();
             SuspendLayout();
             // 
             // mainTitleLabel
@@ -386,12 +388,39 @@ namespace NovelWriterAssistant
             loadDBButton.Text = "Load DB";
             loadDBButton.UseVisualStyleBackColor = false;
             loadDBButton.Click += LoadDBButton_Click;
-            // 
+            //
+            // sessionStatusLabel
+            //
+            sessionStatusLabel.AutoSize = true;
+            sessionStatusLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
+            sessionStatusLabel.ForeColor = System.Drawing.Color.DarkGreen;
+            sessionStatusLabel.Location = new System.Drawing.Point(10, 850);
+            sessionStatusLabel.Name = "sessionStatusLabel";
+            sessionStatusLabel.Size = new System.Drawing.Size(120, 15);
+            sessionStatusLabel.TabIndex = 27;
+            sessionStatusLabel.Text = "Session: Not started";
+            //
+            // resetSessionButton
+            //
+            resetSessionButton.BackColor = System.Drawing.Color.FromArgb(255, 128, 0);
+            resetSessionButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            resetSessionButton.Font = new System.Drawing.Font("Segoe UI", 9F);
+            resetSessionButton.ForeColor = System.Drawing.Color.White;
+            resetSessionButton.Location = new System.Drawing.Point(150, 845);
+            resetSessionButton.Name = "resetSessionButton";
+            resetSessionButton.Size = new System.Drawing.Size(110, 25);
+            resetSessionButton.TabIndex = 28;
+            resetSessionButton.Text = "Reset Session";
+            resetSessionButton.UseVisualStyleBackColor = false;
+            resetSessionButton.Click += ResetSessionButton_Click;
+            //
             // NovelWriterForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(984, 880);
+            Controls.Add(resetSessionButton);
+            Controls.Add(sessionStatusLabel);
             Controls.Add(loadDBButton);
             Controls.Add(generateThreeParagraphButton);
             Controls.Add(generateTwoParagraphButton);
@@ -458,5 +487,7 @@ namespace NovelWriterAssistant
         private System.Windows.Forms.Button generateTwoParagraphButton;
         private System.Windows.Forms.Button generateThreeParagraphButton;
         private System.Windows.Forms.Button loadDBButton;
+        private System.Windows.Forms.Label sessionStatusLabel;
+        private System.Windows.Forms.Button resetSessionButton;
     }
 }
